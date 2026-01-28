@@ -79,13 +79,31 @@ function aeGetSaveTextFromActivity(activity) {
   const dcNum = dcVal == null ? null : Number(dcVal);
   if (dcNum == null || Number.isNaN(dcNum)) return "";
 
-  const abilMap = { str: "KUV", dex: "ÇEV", con: "DAY", int: "ZEK", wis: "BİL", cha: "KAR" };
+  const AE_ABILITY_CAMEL = { str: "Str", dex: "Dex", con: "Con", int: "Int", wis: "Wis", cha: "Cha" };
 
-  if (abilityKey) {
-    const mapped = abilMap[abilityKey] ?? (globalThis.CONFIG?.DND5E?.abilities?.[abilityKey]?.abbreviation ?? abilityKey);
-    const txt = String(mapped);
-    return `${txt.toUpperCase()} ${dcNum}`;
+  
+
+if (abilityKey) {
+  const camel = AE_ABILITY_CAMEL[abilityKey];
+  const i18nKey = camel ? `DND5E.Ability${camel}Abbr` : null;
+
+  // Prefer dnd5e localization so EN/TR/etc. follow Foundry language
+  let abbr = null;
+  try {
+    if (i18nKey && game?.i18n?.localize) {
+      const loc = game.i18n.localize(i18nKey);
+      // If localization key is missing, Foundry returns the key itself
+      if (loc && loc !== i18nKey) abbr = loc;
+    }
+  } catch (e) {}
+
+  // Fallbacks
+  if (!abbr) {
+    abbr = globalThis.CONFIG?.DND5E?.abilities?.[abilityKey]?.abbreviation ?? abilityKey;
   }
+
+  return `${String(abbr).toUpperCase()} ${dcNum}`;
+}
   // If no single ability, just show DC number (no label)
   return `${dcNum}`;
 }
